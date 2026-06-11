@@ -4,7 +4,7 @@ import sqlite3, os, uuid, json, jwt
 from datetime import datetime, timezone
 from functools import wraps
 
-app = Flask(__name__, static_folder='../frontend', static_url_path='')
+app = Flask(__name__, static_folder='frontend', static_url_path='')
 CORS(app)
 
 SECRET = os.environ.get('SECRET_KEY', 'bolao-copa-2026-secret')
