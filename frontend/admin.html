@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Bolão Copa 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+:root{--verde:#00843D;--amarelo:#FFDF00;--ouro:#C8A951;--escuro:#0A1628;--medio:#162540;--branco:#FFFFFF;--vermelho:#E63946;--cinza:#8898AA;--azul:#2563eb;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--escuro);color:var(--branco);min-height:100vh;}
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.login-box{background:var(--medio);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:32px;width:100%;max-width:360px;text-align:center;}
+.login-logo{font-size:44px;margin-bottom:8px;}
+.login-titulo{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--amarelo);letter-spacing:2px;}
+.login-sub{font-size:11px;color:var(--cinza);letter-spacing:2px;margin-bottom:22px;}
+.form-input{width:100%;padding:11px 14px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);border-radius:9px;color:var(--branco);font-size:15px;outline:none;transition:border-color .2s;margin-bottom:12px;}
+.form-input:focus{border-color:var(--amarelo);}
+.btn-full{width:100%;padding:12px;background:var(--verde);color:var(--branco);border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-full:hover{background:#00a34c;}
+.erro-login{color:var(--vermelho);font-size:12px;margin-top:8px;display:none;}
+#app{display:none;}
+header{background:linear-gradient(135deg,#7c3aed 0%,var(--escuro) 60%);border-bottom:3px solid var(--amarelo);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--amarelo);letter-spacing:2px;}
+.admin-badge{background:rgba(124,58,237,.3);border:1px solid rgba(124,58,237,.5);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#c4b5fd;}
+.tabs{display:flex;background:var(--medio);border-bottom:1px solid rgba(255,255,255,.07);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:13px 20px;font-size:11px;font-weight:600;text-transform:uppercase;cursor:pointer;color:var(--cinza);border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab:hover{color:var(--branco);}
+.tab.active{color:var(--amarelo);border-bottom-color:var(--amarelo);}
+.main{padding:16px;max-width:960px;margin:0 auto;}
+.section{display:none;}.section.active{display:block;}
+.card{background:var(--medio);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:18px;margin-bottom:12px;}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--amarelo);margin-bottom:14px;letter-spacing:1px;}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-verde{background:var(--verde);color:white;}.btn-verde:hover{background:#00a34c;}
+.btn-vermelho{background:rgba(230,57,70,.2);color:#f87171;border:1px solid rgba(230,57,70,.4);}.btn-vermelho:hover{background:rgba(230,57,70,.35);}
+.btn-amarelo{background:var(--amarelo);color:var(--escuro);}.btn-amarelo:hover{background:#ffd700;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.btn-cinza{background:rgba(255,255,255,.08);color:var(--cinza);}.btn-cinza:hover{background:rgba(255,255,255,.14);color:var(--branco);}
+/* PARTICIPANTES */
+.part-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:14px;}
+.part-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;}
+.part-nome{font-weight:700;font-size:14px;margin-bottom:4px;}
+.part-codigo{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--amarelo);letter-spacing:3px;line-height:1;}
+.part-meta{font-size:11px;color:var(--cinza);margin-top:4px;}
+.part-actions{display:flex;gap:6px;margin-top:10px;}
+.nova-part{display:flex;gap:8px;margin-bottom:16px;}
+.nova-part input{flex:1;padding:9px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--branco);font-size:14px;outline:none;}
+.nova-part input:focus{border-color:var(--verde);}
+/* RESULTADOS */
+.res-grupo{margin-bottom:8px;}
+.res-grupo-titulo{font-size:10px;color:var(--cinza);text-transform:uppercase;letter-spacing:2px;padding:10px 0 6px;border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:8px;}
+.jogo-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap;}
+.jogo-nomes{flex:1;font-size:12px;min-width:160px;}
+.jogo-nomes .data{font-size:10px;color:var(--cinza);}
+.jogo-nomes .times{font-weight:600;}
+.score-input{width:38px;height:36px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);border-radius:6px;color:var(--branco);font-size:16px;font-weight:700;text-align:center;outline:none;-moz-appearance:textfield;}
+.score-input::-webkit-inner-spin-button,.score-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.score-input:focus{border-color:var(--amarelo);}
+.sep-x{font-size:14px;color:var(--cinza);}
+.res-salvo{color:#4ade80;font-size:10px;font-weight:600;}
+/* NOMES MATA-MATA */
+.nome-input{padding:5px 8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:5px;color:var(--branco);font-size:12px;outline:none;width:110px;}
+.nome-input:focus{border-color:var(--verde);}
+/* RANKING ADMIN */
+.rk-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;margin-bottom:5px;background:rgba(255,255,255,.03);}
+.rk-pos{font-family:'Bebas Neue',sans-serif;font-size:18px;width:24px;color:var(--cinza);}
+.rk-nome{flex:1;font-size:13px;font-weight:600;}
+.rk-pts{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--amarelo);}
+.rk-detail{font-size:10px;color:var(--cinza);}
+/* PALPITES JOGO */
+.pal-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,.03);margin-bottom:4px;font-size:12px;}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--medio);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:22px;width:100%;max-width:380px;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--amarelo);margin-bottom:14px;}
+.toast{position:fixed;bottom:18px;right:18px;padding:10px 16px;border-radius:9px;font-weight:600;font-size:13px;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{background:var(--verde);color:white;}.toast.err{background:var(--vermelho);color:white;}
+.spinner{text-align:center;padding:30px;color:var(--cinza);}
+.badge-count{background:rgba(255,223,0,.2);color:var(--amarelo);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:6px;}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🛡️</div>
+    <div class="login-titulo">Painel Admin</div>
+    <div class="login-sub">Bolão Copa 2026</div>
+    <input class="form-input" id="senhaInput" type="password" placeholder="Senha do administrador" onkeydown="if(event.key==='Enter')loginAdmin()">
+    <button class="btn-full" onclick="loginAdmin()">Entrar →</button>
+    <div class="erro-login" id="erroLogin">Senha incorreta.</div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div>
+      <div class="logo-text">⚽ Admin — Bolão Copa 2026</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="admin-badge">🛡️ Administrador</span>
+      <button class="btn btn-cinza btn-sm" onclick="sair()">Sair</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="participantes" onclick="mudarTab(this)">👥 Participantes</div>
+    <div class="tab" data-tab="resultados" onclick="mudarTab(this)">⚽ Resultados</div>
+    <div class="tab" data-tab="ranking" onclick="mudarTab(this)">🏆 Ranking</div>
+  </div>
+
+  <div class="main">
+
+    <!-- PARTICIPANTES -->
+    <div class="section active" id="sec-participantes">
+      <div class="card">
+        <div class="card-title">👥 Gerenciar Participantes</div>
+        <p style="font-size:12px;color:var(--cinza);margin-bottom:14px;">Cadastre os participantes. Um código único será gerado — compartilhe com cada pessoa para que possa entrar no bolão.</p>
+        <div class="nova-part">
+          <input type="text" id="nomeInput" placeholder="Nome do participante" onkeydown="if(event.key==='Enter')criarParticipante()">
+          <button class="btn btn-verde" onclick="criarParticipante()">+ Adicionar</button>
+        </div>
+        <div id="listaParticipantes"><div class="spinner">⏳ Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="section" id="sec-resultados">
+      <div class="card">
+        <div class="card-title">⚽ Inserir Resultados</div>
+        <p style="font-size:12px;color:var(--cinza);margin-bottom:14px;">Para jogos do mata-mata, você pode também definir o nome dos times. Os pontos são calculados automaticamente.</p>
+        <div id="listaResultados"><div class="spinner">⏳</div></div>
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="section" id="sec-ranking">
+      <div id="rankingContent"><div class="spinner">⏳</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CÓDIGO -->
+<div class="modal-overlay" id="modalCodigo">
+  <div class="modal">
+    <div class="modal-title">✅ Participante Criado</div>
+    <div id="modalCodigoBody"></div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-amarelo" style="width:100%;justify-content:center;" onclick="copiarCodigo()">📋 Copiar mensagem para WhatsApp</button>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="btn btn-cinza" style="width:100%;justify-content:center;" onclick="fecharModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PALPITES JOGO -->
+<div class="modal-overlay" id="modalPalpitesJogo">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title" id="modalPalTitulo">Palpites do Jogo</div>
+    <div id="modalPalBody"></div>
+    <div style="margin-top:14px;"><button class="btn btn-cinza" style="width:100%;justify-content:center;" onclick="fecharModalPal()">Fechar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let adminToken = localStorage.getItem('admin_token');
+let jogosDados = [];
+let novoParticipante = null;
+
+async function api(path, opts={}) {
+  const headers = {'Content-Type':'application/json'};
+  if(adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+  const r = await fetch(API + path, {...opts, headers});
+  const data = await r.json();
+  if(!r.ok) throw new Error(data.error || 'Erro');
+  return data;
+}
+
+async function loginAdmin() {
+  const senha = document.getElementById('senhaInput').value;
+  try {
+    const data = await api('/api/admin/login', {method:'POST', body: JSON.stringify({senha})});
+    adminToken = data.token;
+    localStorage.setItem('admin_token', adminToken);
+    document.getElementById('erroLogin').style.display = 'none';
+    iniciarApp();
+  } catch(e) {
+    document.getElementById('erroLogin').style.display = 'block';
+  }
+}
+
+function sair() { localStorage.removeItem('admin_token'); location.reload(); }
+
+async function iniciarApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  jogosDados = await api('/api/jogos');
+  carregarParticipantes();
+}
+
+// ── PARTICIPANTES ──────────────────────────────────────────────────────────
+async function carregarParticipantes() {
+  const lista = await api('/api/admin/participantes');
+  const c = document.getElementById('listaParticipantes');
+  if(!lista.length){c.innerHTML='<div style="color:var(--cinza);font-size:13px;">Nenhum participante ainda.</div>';return;}
+  c.innerHTML = `<div class="part-grid">${lista.map(p=>`
+    <div class="part-card">
+      <div class="part-nome">${p.nome}</div>
+      <div class="part-codigo">${p.codigo}</div>
+      <div class="part-meta">${p.total_palpites} palpites dados</div>
+      <div class="part-actions">
+        <button class="btn btn-cinza btn-sm" onclick="copiarCodigoExistente('${p.nome}','${p.codigo}')">📋 Copiar código</button>
+        <button class="btn btn-vermelho btn-sm" onclick="deletarParticipante('${p.id}','${p.nome}')">🗑️</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+async function criarParticipante() {
+  const nome = document.getElementById('nomeInput').value.trim();
+  if(!nome){toast('Digite um nome','err');return;}
+  try {
+    const p = await api('/api/admin/participantes', {method:'POST', body: JSON.stringify({nome})});
+    novoParticipante = p;
+    document.getElementById('nomeInput').value = '';
+    document.getElementById('modalCodigoBody').innerHTML = `
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:13px;color:var(--cinza);margin-bottom:4px;">Participante</div>
+        <div style="font-size:18px;font-weight:700;">${p.nome}</div>
+      </div>
+      <div style="background:rgba(255,223,0,.08);border:2px dashed rgba(255,223,0,.4);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--cinza);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Código de Acesso</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--amarelo);letter-spacing:6px;">${p.codigo}</div>
+      </div>
+      <div style="font-size:11px;color:var(--cinza);margin-top:10px;text-align:center;">Compartilhe este código com ${p.nome} para que possa acessar o bolão.</div>`;
+    document.getElementById('modalCodigo').classList.add('open');
+    carregarParticipantes();
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function deletarParticipante(id, nome) {
+  if(!confirm(`Remover ${nome} do bolão? Todos os palpites serão apagados.`)) return;
+  await api(`/api/admin/participantes/${id}`, {method:'DELETE'});
+  toast(`${nome} removido`,'ok');
+  carregarParticipantes();
+}
+
+function copiarCodigoExistente(nome, codigo) {
+  const msg = `⚽ *Bolão Copa 2026*\nOlá, ${nome}! Aqui está seu código de acesso:\n\n🔑 *${codigo}*\n\nAcesse: ${window.location.origin}\nDigite seu código para entrar!`;
+  navigator.clipboard.writeText(msg).then(()=>toast('Mensagem copiada!','ok')).catch(()=>{});
+}
+
+function copiarCodigo() {
+  if(!novoParticipante) return;
+  copiarCodigoExistente(novoParticipante.nome, novoParticipante.codigo);
+}
+
+// ── RESULTADOS ─────────────────────────────────────────────────────────────
+const FASES_ORDER = ['Grupo A','Grupo B','Grupo C','Grupo D','Grupo E','Grupo F',
+  'Grupo G','Grupo H','Grupo I','Grupo J','Grupo K','Grupo L',
+  '16 Avos','Oitavas','Quartas','Semifinais','3º Lugar','Final'];
+
+async function carregarResultados() {
+  const c = document.getElementById('listaResultados');
+  const porFase = {};
+  jogosDados.forEach(j => { if(!porFase[j.fase]) porFase[j.fase]=[]; porFase[j.fase].push(j); });
+
+  let html = '';
+  FASES_ORDER.forEach(fase => {
+    if(!porFase[fase]) return;
+    const ehMataM = !fase.startsWith('Grupo');
+    html += `<div class="res-grupo"><div class="res-grupo-titulo">⚽ ${fase}</div>`;
+    porFase[fase].forEach(j => {
+      const r = j.resultado;
+      const t1 = r?.time1_nome || j.time1;
+      const t2 = r?.time2_nome || j.time2;
+      html += `<div class="jogo-row" id="row-${j.id}">
+        <div class="jogo-nomes">
+          <div class="data">${j.data.split('-').reverse().join('/')} · ${j.hora}</div>
+          <div class="times">${j.flag1} ${t1} × ${t2} ${j.flag2}</div>
+        </div>
+        ${ehMataM ? `
+          <input class="nome-input" id="t1n-${j.id}" placeholder="${j.time1}" value="${r?.time1_nome||''}" style="font-size:11px;">
+          <span style="font-size:10px;color:var(--cinza);">×</span>
+          <input class="nome-input" id="t2n-${j.id}" placeholder="${j.time2}" value="${r?.time2_nome||''}" style="font-size:11px;">
+        ` : ''}
+        <input type="number" class="score-input" id="g1-${j.id}" min="0" max="20" value="${r?r.gols1:''}" placeholder="—">
+        <span class="sep-x">×</span>
+        <input type="number" class="score-input" id="g2-${j.id}" min="0" max="20" value="${r?r.gols2:''}" placeholder="—">
+        <button class="btn btn-verde btn-sm" onclick="salvarResultado(${j.id},${ehMataM})">${r?'✓ OK':'Salvar'}</button>
+        ${r?`<button class="btn btn-vermelho btn-sm" onclick="deletarResultado(${j.id})">✕</button>`:''}
+        <button class="btn btn-cinza btn-sm" onclick="verPalpitesJogo(${j.id},'${t1} × ${t2}')">👁</button>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  c.innerHTML = html;
+}
+
+async function salvarResultado(jogoId, ehMataM) {
+  const g1 = parseInt(document.getElementById(`g1-${jogoId}`).value);
+  const g2 = parseInt(document.getElementById(`g2-${jogoId}`).value);
+  if(isNaN(g1)||isNaN(g2)||g1<0||g2<0){toast('Placar inválido','err');return;}
+  const t1n = ehMataM ? (document.getElementById(`t1n-${jogoId}`)?.value||'') : '';
+  const t2n = ehMataM ? (document.getElementById(`t2n-${jogoId}`)?.value||'') : '';
+  await api('/api/admin/resultados', {method:'POST', body: JSON.stringify({jogo_id:jogoId,gols1:g1,gols2:g2,time1_nome:t1n,time2_nome:t2n})});
+  toast('Resultado salvo! ✅','ok');
+  jogosDados = await api('/api/jogos');
+  carregarResultados();
+}
+
+async function deletarResultado(jogoId) {
+  if(!confirm('Remover este resultado?')) return;
+  await api(`/api/admin/resultados/${jogoId}`, {method:'DELETE'});
+  toast('Resultado removido','ok');
+  jogosDados = await api('/api/jogos');
+  carregarResultados();
+}
+
+async function verPalpitesJogo(jogoId, titulo) {
+  document.getElementById('modalPalTitulo').textContent = titulo;
+  document.getElementById('modalPalBody').innerHTML = '<div class="spinner">⏳</div>';
+  document.getElementById('modalPalpitesJogo').classList.add('open');
+  const pals = await api(`/api/admin/palpites/${jogoId}`);
+  const j = jogosDados.find(x=>x.id===jogoId);
+  if(!pals.length){document.getElementById('modalPalBody').innerHTML='<div style="color:var(--cinza);font-size:13px;text-align:center;padding:20px;">Nenhum palpite ainda.</div>';return;}
+  let html = '';
+  pals.forEach(p => {
+    let pts='', ptsCls='';
+    if(j?.resultado) {
+      const r=j.resultado;
+      if(r.gols1===p.gols1&&r.gols2===p.gols2){pts='+10pts';ptsCls='color:#fbbf24;'}
+      else{const rv=r.gols1>r.gols2?1:r.gols1<r.gols2?2:0,pv=p.gols1>p.gols2?1:p.gols1<p.gols2?2:0;
+        if(rv===pv){pts='+5pts';ptsCls='color:#4ade80;'}else{pts='0pts';ptsCls='color:var(--cinza);'}}
+    }
+    html+=`<div class="pal-row"><span style="font-weight:600;">${p.nome}</span><span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--amarelo);">${p.gols1}×${p.gols2}</span><span style="${ptsCls};font-size:12px;font-weight:700;">${pts}</span></div>`;
+  });
+  document.getElementById('modalPalBody').innerHTML = html;
+}
+
+// ── RANKING ────────────────────────────────────────────────────────────────
+async function carregarRanking() {
+  const ranking = await api('/api/ranking');
+  const enc = jogosDados.filter(j=>j.resultado).length;
+  let html = `<div class="card" style="padding:10px 14px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--cinza);">
+    <span>${ranking.length} participantes</span><span>${enc}/${jogosDados.length} jogos com resultado</span>
+  </div></div><div class="card">`;
+  ranking.forEach((p,i) => {
+    const pos=i+1,cls=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
+    const emoji=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos;
+    html+=`<div class="rk-row">
+      <div class="rk-pos">${emoji}</div>
+      <div class="rk-nome">${p.nome}<div class="rk-detail">${p.palpites} palpites · ${p.exatos} exatos · ${p.vencedores} vencedores</div></div>
+      <div class="rk-pts">${p.pontos}<span style="font-size:10px;color:var(--cinza);margin-left:3px;">pts</span></div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('rankingContent').innerHTML = html;
+}
+
+function mudarTab(el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  const tab = el.dataset.tab;
+  document.getElementById('sec-'+tab).classList.add('active');
+  if(tab==='resultados') carregarResultados();
+  if(tab==='ranking') carregarRanking();
+}
+
+function fecharModal() { document.getElementById('modalCodigo').classList.remove('open'); }
+function fecharModalPal() { document.getElementById('modalPalpitesJogo').classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+function toast(msg,tipo) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(tipo==='err'?'err':'ok');
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+if(adminToken) iniciarApp();
+</script>
+</body>
+</html>
