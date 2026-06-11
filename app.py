@@ -222,11 +222,11 @@ def require_auth(f):
 # ─── ROTAS PÚBLICAS ──────────────────────────────────────────────────────────
 @app.route('/')
 def index():
-    return send_from_directory('../frontend', 'index.html')
+    return send_from_directory('frontend', 'index.html')
 
 @app.route('/admin')
 def admin_page():
-    return send_from_directory('../frontend', 'admin.html')
+    return send_from_directory('frontend', 'admin.html')
 
 @app.route('/api/login', methods=['POST'])
 def login():
