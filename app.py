@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import sqlite3, os, uuid, json, jwt
-from datetime import datetime, timezone
+import sqlite3, os, uuid, jwt, random, string
+from datetime import datetime, timedelta
 from functools import wraps
 
 app = Flask(__name__, static_folder='frontend', static_url_path='')
@@ -11,9 +11,129 @@ SECRET = os.environ.get('SECRET_KEY', 'bolao-copa-2026-secret')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin2026')
 DB_PATH = os.path.join(os.path.dirname(__file__), 'bolao.db')
 
+# ─── ONDE ASSISTIR ────────────────────────────────────────────────────────────
+TRANSMISSAO = {
+    # Grupo A
+    1:  {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    2:  {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    3:  {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    4:  {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    5:  {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    6:  {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo B
+    7:  {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    8:  {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    9:  {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    10: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    11: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    12: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo C (Brasil)
+    13: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    14: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    15: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    16: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    17: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    18: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo D
+    19: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    20: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    21: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    22: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    23: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    24: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo E
+    25: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    26: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    27: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    28: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    29: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    30: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo F
+    31: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    32: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    33: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    34: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    35: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    36: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo G
+    37: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    38: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    39: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    40: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    41: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    42: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo H
+    43: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    44: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    45: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    46: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    47: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    48: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo I
+    49: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    50: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    51: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    52: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    53: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    54: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo J
+    55: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    56: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    57: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    58: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    59: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    60: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo K
+    61: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    62: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    63: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    64: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    65: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    66: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    # Grupo L
+    67: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    68: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    69: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    70: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    71: {"tv": ["SporTV 2"], "stream": ["https://globoplay.globo.com"]},
+    72: {"tv": ["SporTV 3"], "stream": ["https://globoplay.globo.com"]},
+    # Mata-mata
+    73: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    74: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    75: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    76: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    77: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    78: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    79: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    80: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    81: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    82: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    83: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    84: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    85: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    86: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    87: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    88: {"tv": ["SporTV", "Globo"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    89: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    90: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    91: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    92: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    93: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    94: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    95: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    96: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    97: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    98: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    99: {"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    100:{"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    101:{"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    102:{"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+    103:{"tv": ["SporTV"], "stream": ["https://globoplay.globo.com"]},
+    104:{"tv": ["Globo", "SporTV"], "stream": ["https://globoplay.globo.com", "https://www.youtube.com/@CazéTV"]},
+}
+
 # ─── JOGOS ────────────────────────────────────────────────────────────────────
 JOGOS = [
-  # Fase de Grupos
   {"id":1,"fase":"Grupo A","data":"2026-06-11","hora":"16:00","time1":"México","flag1":"🇲🇽","time2":"África do Sul","flag2":"🇿🇦"},
   {"id":2,"fase":"Grupo A","data":"2026-06-11","hora":"23:00","time1":"Coreia do Sul","flag1":"🇰🇷","time2":"Tchéquia","flag2":"🇨🇿"},
   {"id":3,"fase":"Grupo A","data":"2026-06-18","hora":"13:00","time1":"Tchéquia","flag1":"🇨🇿","time2":"África do Sul","flag2":"🇿🇦"},
@@ -86,7 +206,6 @@ JOGOS = [
   {"id":70,"fase":"Grupo L","data":"2026-06-23","hora":"20:00","time1":"Panamá","flag1":"🇵🇦","time2":"Croácia","flag2":"🇭🇷"},
   {"id":71,"fase":"Grupo L","data":"2026-06-27","hora":"18:00","time1":"Panamá","flag1":"🇵🇦","time2":"Inglaterra","flag2":"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
   {"id":72,"fase":"Grupo L","data":"2026-06-27","hora":"18:00","time1":"Croácia","flag1":"🇭🇷","time2":"Gana","flag2":"🇬🇭"},
-  # 16 avos
   {"id":73,"fase":"16 Avos","data":"2026-06-28","hora":"16:00","time1":"2º A","flag1":"🏳️","time2":"2º B","flag2":"🏳️"},
   {"id":74,"fase":"16 Avos","data":"2026-06-29","hora":"14:00","time1":"1º C","flag1":"🏳️","time2":"2º F","flag2":"🏳️"},
   {"id":75,"fase":"16 Avos","data":"2026-06-29","hora":"17:30","time1":"1º E","flag1":"🏳️","time2":"3º ABCDF","flag2":"🏳️"},
@@ -103,26 +222,22 @@ JOGOS = [
   {"id":86,"fase":"16 Avos","data":"2026-07-03","hora":"15:00","time1":"2º D","flag1":"🏳️","time2":"2º G","flag2":"🏳️"},
   {"id":87,"fase":"16 Avos","data":"2026-07-03","hora":"19:00","time1":"1º J","flag1":"🏳️","time2":"2º H","flag2":"🏳️"},
   {"id":88,"fase":"16 Avos","data":"2026-07-03","hora":"22:30","time1":"1º K","flag1":"🏳️","time2":"3º DEIJL","flag2":"🏳️"},
-  # Oitavas
-  {"id":89,"fase":"Oitavas","data":"2026-07-04","hora":"14:00","time1":"Venc. Jogo 73","flag1":"🏳️","time2":"Venc. Jogo 74","flag2":"🏳️"},
-  {"id":90,"fase":"Oitavas","data":"2026-07-04","hora":"18:00","time1":"Venc. Jogo 75","flag1":"🏳️","time2":"Venc. Jogo 76","flag2":"🏳️"},
-  {"id":91,"fase":"Oitavas","data":"2026-07-05","hora":"17:00","time1":"Venc. Jogo 77","flag1":"🏳️","time2":"Venc. Jogo 78","flag2":"🏳️"},
-  {"id":92,"fase":"Oitavas","data":"2026-07-05","hora":"21:00","time1":"Venc. Jogo 79","flag1":"🏳️","time2":"Venc. Jogo 80","flag2":"🏳️"},
-  {"id":93,"fase":"Oitavas","data":"2026-07-06","hora":"16:00","time1":"Venc. Jogo 81","flag1":"🏳️","time2":"Venc. Jogo 82","flag2":"🏳️"},
-  {"id":94,"fase":"Oitavas","data":"2026-07-06","hora":"21:00","time1":"Venc. Jogo 83","flag1":"🏳️","time2":"Venc. Jogo 84","flag2":"🏳️"},
-  {"id":95,"fase":"Oitavas","data":"2026-07-07","hora":"13:00","time1":"Venc. Jogo 85","flag1":"🏳️","time2":"Venc. Jogo 86","flag2":"🏳️"},
-  {"id":96,"fase":"Oitavas","data":"2026-07-07","hora":"17:00","time1":"Venc. Jogo 87","flag1":"🏳️","time2":"Venc. Jogo 88","flag2":"🏳️"},
-  # Quartas
-  {"id":97,"fase":"Quartas","data":"2026-07-09","hora":"17:00","time1":"Venc. Oitavas 89","flag1":"🏳️","time2":"Venc. Oitavas 90","flag2":"🏳️"},
-  {"id":98,"fase":"Quartas","data":"2026-07-10","hora":"16:00","time1":"Venc. Oitavas 91","flag1":"🏳️","time2":"Venc. Oitavas 92","flag2":"🏳️"},
-  {"id":99,"fase":"Quartas","data":"2026-07-11","hora":"18:00","time1":"Venc. Oitavas 93","flag1":"🏳️","time2":"Venc. Oitavas 94","flag2":"🏳️"},
-  {"id":100,"fase":"Quartas","data":"2026-07-11","hora":"22:00","time1":"Venc. Oitavas 95","flag1":"🏳️","time2":"Venc. Oitavas 96","flag2":"🏳️"},
-  # Semis
-  {"id":101,"fase":"Semifinais","data":"2026-07-14","hora":"16:00","time1":"Venc. Quartas 97","flag1":"🏳️","time2":"Venc. Quartas 98","flag2":"🏳️"},
-  {"id":102,"fase":"Semifinais","data":"2026-07-15","hora":"16:00","time1":"Venc. Quartas 99","flag1":"🏳️","time2":"Venc. Quartas 100","flag2":"🏳️"},
-  # 3º lugar e Final
-  {"id":103,"fase":"3º Lugar","data":"2026-07-18","hora":"18:00","time1":"Perd. Semi 101","flag1":"🏳️","time2":"Perd. Semi 102","flag2":"🏳️"},
-  {"id":104,"fase":"Final","data":"2026-07-19","hora":"16:00","time1":"Venc. Semi 101","flag1":"🏳️","time2":"Venc. Semi 102","flag2":"🏳️"},
+  {"id":89,"fase":"Oitavas","data":"2026-07-04","hora":"14:00","time1":"Venc. 73","flag1":"🏳️","time2":"Venc. 74","flag2":"🏳️"},
+  {"id":90,"fase":"Oitavas","data":"2026-07-04","hora":"18:00","time1":"Venc. 75","flag1":"🏳️","time2":"Venc. 76","flag2":"🏳️"},
+  {"id":91,"fase":"Oitavas","data":"2026-07-05","hora":"17:00","time1":"Venc. 77","flag1":"🏳️","time2":"Venc. 78","flag2":"🏳️"},
+  {"id":92,"fase":"Oitavas","data":"2026-07-05","hora":"21:00","time1":"Venc. 79","flag1":"🏳️","time2":"Venc. 80","flag2":"🏳️"},
+  {"id":93,"fase":"Oitavas","data":"2026-07-06","hora":"16:00","time1":"Venc. 81","flag1":"🏳️","time2":"Venc. 82","flag2":"🏳️"},
+  {"id":94,"fase":"Oitavas","data":"2026-07-06","hora":"21:00","time1":"Venc. 83","flag1":"🏳️","time2":"Venc. 84","flag2":"🏳️"},
+  {"id":95,"fase":"Oitavas","data":"2026-07-07","hora":"13:00","time1":"Venc. 85","flag1":"🏳️","time2":"Venc. 86","flag2":"🏳️"},
+  {"id":96,"fase":"Oitavas","data":"2026-07-07","hora":"17:00","time1":"Venc. 87","flag1":"🏳️","time2":"Venc. 88","flag2":"🏳️"},
+  {"id":97,"fase":"Quartas","data":"2026-07-09","hora":"17:00","time1":"Venc. 89","flag1":"🏳️","time2":"Venc. 90","flag2":"🏳️"},
+  {"id":98,"fase":"Quartas","data":"2026-07-10","hora":"16:00","time1":"Venc. 91","flag1":"🏳️","time2":"Venc. 92","flag2":"🏳️"},
+  {"id":99,"fase":"Quartas","data":"2026-07-11","hora":"18:00","time1":"Venc. 93","flag1":"🏳️","time2":"Venc. 94","flag2":"🏳️"},
+  {"id":100,"fase":"Quartas","data":"2026-07-11","hora":"22:00","time1":"Venc. 95","flag1":"🏳️","time2":"Venc. 96","flag2":"🏳️"},
+  {"id":101,"fase":"Semifinais","data":"2026-07-14","hora":"16:00","time1":"Venc. 97","flag1":"🏳️","time2":"Venc. 98","flag2":"🏳️"},
+  {"id":102,"fase":"Semifinais","data":"2026-07-15","hora":"16:00","time1":"Venc. 99","flag1":"🏳️","time2":"Venc. 100","flag2":"🏳️"},
+  {"id":103,"fase":"3º Lugar","data":"2026-07-18","hora":"18:00","time1":"Perd. 101","flag1":"🏳️","time2":"Perd. 102","flag2":"🏳️"},
+  {"id":104,"fase":"Final","data":"2026-07-19","hora":"16:00","time1":"Venc. 101","flag1":"🏳️","time2":"Venc. 102","flag2":"🏳️"},
 ]
 
 JOGOS_MAP = {j['id']: j for j in JOGOS}
@@ -160,6 +275,14 @@ def init_db():
             time2_nome TEXT,
             atualizado_em TEXT DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS chat (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            jogo_id INTEGER NOT NULL,
+            participante_id TEXT NOT NULL,
+            nome TEXT NOT NULL,
+            mensagem TEXT NOT NULL,
+            criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+        );
     ''')
     conn.commit()
     conn.close()
@@ -168,16 +291,11 @@ init_db()
 
 # ─── HELPERS ─────────────────────────────────────────────────────────────────
 def jogo_bloqueado(jogo):
-    """Retorna True se o horário do jogo já passou (UTC-3 Brasília)"""
     try:
-        from datetime import timedelta
         dt_str = f"{jogo['data']} {jogo['hora']}"
         dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
-        # Horários no arquivo são horário de Brasília (UTC-3)
-        # Converter para UTC para comparar
         dt_utc = dt + timedelta(hours=3)
-        now_utc = datetime.utcnow()
-        return now_utc >= dt_utc
+        return datetime.utcnow() >= dt_utc
     except:
         return False
 
@@ -213,6 +331,7 @@ def require_auth(f):
         try:
             data = jwt.decode(token, SECRET, algorithms=['HS256'])
             request.user_id = data.get('id')
+            request.user_nome = data.get('nome')
             request.user_role = data.get('role')
         except:
             return jsonify({'error':'Token inválido'}), 401
@@ -252,7 +371,22 @@ def admin_login():
 def get_jogos():
     conn = get_db()
     resultados = {r['jogo_id']: dict(r) for r in conn.execute('SELECT * FROM resultados').fetchall()}
+    palpites_all = conn.execute('SELECT jogo_id, gols1, gols2 FROM palpites').fetchall()
     conn.close()
+
+    # Calcular termômetro por jogo
+    termo = {}
+    for p in palpites_all:
+        jid = p['jogo_id']
+        if jid not in termo:
+            termo[jid] = {'t1': 0, 'emp': 0, 't2': 0}
+        if p['gols1'] > p['gols2']:
+            termo[jid]['t1'] += 1
+        elif p['gols1'] < p['gols2']:
+            termo[jid]['t2'] += 1
+        else:
+            termo[jid]['emp'] += 1
+
     jogos_out = []
     for j in JOGOS:
         jo = dict(j)
@@ -261,6 +395,21 @@ def get_jogos():
             r = resultados[j['id']]
             jo['resultado'] = {'gols1': r['gols1'], 'gols2': r['gols2'],
                                'time1_nome': r['time1_nome'], 'time2_nome': r['time2_nome']}
+        # Termômetro — só mostra após bloqueio
+        if jo['bloqueado'] and j['id'] in termo:
+            t = termo[j['id']]
+            total = t['t1'] + t['emp'] + t['t2']
+            if total > 0:
+                jo['termometro'] = {
+                    'total': total,
+                    'pct_t1': round(t['t1']/total*100),
+                    'pct_emp': round(t['emp']/total*100),
+                    'pct_t2': round(t['t2']/total*100),
+                }
+        # Transmissão
+        tr = TRANSMISSAO.get(j['id'])
+        if tr:
+            jo['transmissao'] = tr
         jogos_out.append(jo)
     return jsonify(jogos_out)
 
@@ -271,11 +420,9 @@ def get_ranking():
     resultados = {r['jogo_id']: dict(r) for r in conn.execute('SELECT * FROM resultados').fetchall()}
     palpites_all = conn.execute('SELECT * FROM palpites').fetchall()
     conn.close()
-
     palpites_map = {}
     for p in palpites_all:
         palpites_map[(p['participante_id'], p['jogo_id'])] = p
-
     ranking = []
     for p in participantes:
         pts = 0; exatos = 0; vencedores = 0; np = 0
@@ -292,7 +439,7 @@ def get_ranking():
     ranking.sort(key=lambda x: (-x['pontos'], -x['exatos'], -x['vencedores']))
     return jsonify(ranking)
 
-# ─── ROTAS PARTICIPANTE ──────────────────────────────────────────────────────
+# ─── PALPITES ────────────────────────────────────────────────────────────────
 @app.route('/api/palpites', methods=['GET'])
 @require_auth
 def get_palpites():
@@ -326,7 +473,32 @@ def salvar_palpite():
     conn.close()
     return jsonify({'ok': True})
 
-# ─── ROTAS ADMIN ─────────────────────────────────────────────────────────────
+# ─── CHAT ────────────────────────────────────────────────────────────────────
+@app.route('/api/chat/<int:jogo_id>', methods=['GET'])
+@require_auth
+def get_chat(jogo_id):
+    conn = get_db()
+    rows = conn.execute('''SELECT c.id, c.nome, c.mensagem, c.criado_em
+                           FROM chat c WHERE c.jogo_id=?
+                           ORDER BY c.criado_em ASC LIMIT 100''', (jogo_id,)).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+@app.route('/api/chat/<int:jogo_id>', methods=['POST'])
+@require_auth
+def post_chat(jogo_id):
+    data = request.json
+    msg = (data.get('mensagem') or '').strip()
+    if not msg or len(msg) > 300:
+        return jsonify({'error': 'Mensagem inválida'}), 400
+    conn = get_db()
+    conn.execute('INSERT INTO chat (jogo_id, participante_id, nome, mensagem) VALUES (?,?,?,?)',
+                 (jogo_id, request.user_id, request.user_nome, msg))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+# ─── ADMIN ───────────────────────────────────────────────────────────────────
 @app.route('/api/admin/participantes', methods=['GET'])
 @require_admin
 def admin_get_participantes():
@@ -343,12 +515,9 @@ def admin_criar_participante():
     if not nome:
         return jsonify({'error': 'Nome obrigatório'}), 400
     pid = str(uuid.uuid4())
-    # Gera código: 3 letras do nome + 4 dígitos aleatórios
-    import random, string
     letras = ''.join(c for c in nome.upper() if c.isalpha())[:3].ljust(3,'X')
     digitos = ''.join(random.choices(string.digits, k=4))
     codigo = letras + digitos
-    # Garante unicidade
     conn = get_db()
     tentativas = 0
     while conn.execute('SELECT 1 FROM participantes WHERE codigo=?', (codigo,)).fetchone():
@@ -372,6 +541,7 @@ def admin_criar_participante():
 def admin_deletar_participante(pid):
     conn = get_db()
     conn.execute('DELETE FROM palpites WHERE participante_id=?', (pid,))
+    conn.execute('DELETE FROM chat WHERE participante_id=?', (pid,))
     conn.execute('DELETE FROM participantes WHERE id=?', (pid,))
     conn.commit()
     conn.close()
@@ -421,7 +591,5 @@ def admin_ver_palpites(jogo_id):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f"🚀 Bolão Copa 2026 rodando em http://localhost:{port}")
-    print(f"   Admin: http://localhost:{port}/admin")
-    print(f"   Senha admin: {ADMIN_PASSWORD}")
+    print(f"🚀 Bolão Copa 2026 — http://localhost:{port}")
     app.run(host='0.0.0.0', port=port, debug=False)
